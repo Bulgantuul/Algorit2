@@ -81,7 +81,7 @@ def calculate_cost(start_index, end_index, words, L):
         return 0
     else:
         remaining_space = L - total_length
-        return remaining_space ** 3
+        return remaining_space ** 3  # cubic badness
 
 def dp_justify(text, L):
     words = text.split()
@@ -125,14 +125,26 @@ def run_tests():
     print(f"  АЖЛЫН ҮР ДҮНГИЙН ХАРЬЦУУЛАЛТ (L={L})")
     print(f"=====================================================")
     
-    # DP Монгол
-    print("\n--- 1. DP АРГААР ЖИГДЛЭСЭН (Монгол) ---")
+    # DP English
+    print("\n--- 1. DP АРГААР ЖИГДЛЭСЭН (English) ---")
+    dp_result_en = dp_justify(ENGLISH_TEXT, L)
+    for line in dp_result_en:
+        print(f"|{line}|")
+
+    # DP Mongolian
+    print("\n--- 2. DP АРГААР ЖИГДЛЭСЭН (Монгол) ---")
     dp_result_mn = dp_justify(MONGOLIAN_TEXT, L)
     for line in dp_result_mn:
         print(f"|{line}|")
 
-    # Greedy Монгол
-    print("\n--- 2. Greedy АРГААР ЖИГДЛЭСЭН (Монгол) ---")
+    # Greedy English
+    print("\n--- 3. Greedy АРГААР ЖИГДЛЭСЭН (English) ---")
+    greedy_result_en = greedy_justify(ENGLISH_TEXT, L)
+    for line in greedy_result_en:
+        print(f"|{line}|")
+
+    # Greedy Mongolian
+    print("\n--- 4. Greedy АРГААР ЖИГДЛЭСЭН (Монгол) ---")
     greedy_result_mn = greedy_justify(MONGOLIAN_TEXT, L)
     for line in greedy_result_mn:
         print(f"|{line}|")
@@ -157,12 +169,44 @@ def run_tests():
 
     if time_greedy_large > 0:
         speed_difference = time_dp_large / time_greedy_large
-        if speed_difference >= 1000:
-            print("\n--- Дүгнэлт ---")
-            print(f"Greedy нь Том бичвэрийн хувьд DP-ээс {speed_difference:,.0f} дахин хурдан ажиллаж байна.")
-        else:
-            print("\n--- Дүгнэлт ---")
-            print(f"Greedy нь Том бичвэрийн хувьд DP-ээс {speed_difference:.2f} дахин хурдан ажиллаж байна.")
+        print("\n--- Дүгнэлт ---")
+        print(f"Greedy нь Том бичвэрийн хувьд DP-ээс {speed_difference:.2f} дахин хурдан ажиллаж байна.")
+
+# ------------------ Unit Tests ------------------
+def unit_tests():
+    test_texts = [
+        ENGLISH_TEXT,
+        MONGOLIAN_TEXT
+    ]
+    
+    for text in test_texts:
+        # Test DP
+        dp_lines = dp_justify(text, LINE_LIMIT)
+        dp_joined = " ".join(line.strip() for line in dp_lines)
+        words_original = text.split()
+        words_dp = dp_joined.split()
+        
+        # Test 1: DP lines <= LINE_LIMIT
+        for line in dp_lines:
+            assert len(line) <= LINE_LIMIT, f"DP line exceeds limit: {line}"
+        
+        # Test 2: All words preserved
+        assert words_original == words_dp, f"DP words mismatch: {words_dp}"
+        
+        # Test Greedy
+        greedy_lines = greedy_justify(text, LINE_LIMIT)
+        greedy_joined = " ".join(line.strip() for line in greedy_lines)
+        words_greedy = greedy_joined.split()
+        
+        # Test 3: Greedy lines <= LINE_LIMIT
+        for line in greedy_lines:
+            assert len(line) <= LINE_LIMIT, f"Greedy line exceeds limit: {line}"
+        
+        # Test 4: All words preserved
+        assert words_original == words_greedy, f"Greedy words mismatch: {words_greedy}"
+    
+    print("All unit tests passed for DP and Greedy justification!")
 
 if __name__ == "__main__":
     run_tests()
+    unit_tests()
