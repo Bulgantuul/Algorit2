@@ -310,17 +310,16 @@ int main() {
 
     cout << "\nMongolian costs: DP = " << dpCostMn << ", Greedy = " << grCostMn << "\n";
     cout << "Mongolian runtimes: DP = " << dt_dp_mn.count() * 1e6 << " μs, Greedy = " << dt_gr_mn.count() * 1e6 << " μs\n";
+{
+    vector<string> words = splitText(MN_TEXT);
+    size_t n = words.size();
+    size_t bytes = (n + 1) * sizeof(long long) + (n + 1) * sizeof(int);
+    cout << "\nDP-ийн ой санах ойны тооцоо (Монгол текст): " << bytes << " байт (" << (bytes / 1024.0) << " KB)\n";
+}
 
-    {
-        vector<string> words = splitText(MN_TEXT);
-        size_t n = words.size();
-        size_t bytes = (n + 1) * sizeof(long long) + (n + 1) * sizeof(int);
-        cout << "\nEstimated DP memory (Mongolian text): " << bytes << " bytes (" << (bytes / 1024.0) << " KB)\n";
-    }
-
-    cout << "\n--- Quick conclusion ---\n";
-    cout << "DP gives (provably) minimal badness for the chosen badness function; Greedy is faster but can be suboptimal.\n";
-    cout << "Observe costs and runtimes above for empirical comparison.\n";
+cout << "\n--- Түргэн дүгнэлт ---\n";
+cout << "DP нь сонгогдсон badness функцэд (баталгаатай) хамгийн бага badness өгдөг; Greedy нь хурдан ажилладаг ч үр дүн нь заримдаа suboptimal байж болно.\n";
+cout << "Дээрх тооцоо, гүйцэтгэлийн хугацааг ажиглаад харьцуулалт хийх боломжтой.\n";
 
     cout << "\n================================================================\n";
     return 0;

@@ -32,7 +32,6 @@ TEXT_LARGE = generate_random_text(NUM_WORDS_LARGE)
 
 
 def format_line(line_words, L):
-    """Мөрийг бүрэн жигдлэх (space-үүдийг тэнцүү хуваарилах)."""
     if not line_words: 
         return ""
     word_count = len(line_words)
