@@ -1,7 +1,3 @@
-// justify_full.cpp
-// g++ -std=c++17 justify_full.cpp -O2 -o justify_full
-// ./justify_full
-
 #include <iostream>
 #include <vector>
 #include <string>
@@ -18,12 +14,10 @@ const int LINE_LIMIT = 70;
 const int DP_COST_EXPONENT = 2;
 const long long INF_COST = (long long)1e18;
 
-// -------------------- UTF-8 visual length --------------------
 int getVisualLength(const string &s) {
     int length = 0;
     for (size_t i = 0; i < s.size(); ++i) {
         unsigned char c = static_cast<unsigned char>(s[i]);
-        // continuation bytes are 0x80..0xBF, start bytes are not
         if ((c & 0xC0) != 0x80) {
             ++length;
         }
@@ -31,7 +25,6 @@ int getVisualLength(const string &s) {
     return length;
 }
 
-// -------------------- Helpers --------------------
 vector<string> splitText(const string &text) {
     vector<string> words;
     stringstream ss(text);
@@ -40,7 +33,6 @@ vector<string> splitText(const string &text) {
     return words;
 }
 
-// formatLine: full justification; if isLast then left-justify (pad right)
 string formatLine(const vector<string> &lineWords, int L, bool isLastLine = false) {
     if (lineWords.empty()) return string();
     int wordCount = (int)lineWords.size();
@@ -48,7 +40,6 @@ string formatLine(const vector<string> &lineWords, int L, bool isLastLine = fals
     for (const string &w : lineWords) totalVisualWordLength += getVisualLength(w);
 
     if (isLastLine || wordCount == 1) {
-        // left-justify: single space between words, pad right with spaces
         string out;
         for (int i = 0; i < wordCount; ++i) {
             if (i) out += ' ';
@@ -62,7 +53,6 @@ string formatLine(const vector<string> &lineWords, int L, bool isLastLine = fals
     int numGaps = wordCount - 1;
     int totalSpaces = L - totalVisualWordLength;
     if (totalSpaces < numGaps) {
-        // fallback: put single spaces (shouldn't happen if used correctly)
         string out;
         for (int i = 0; i < wordCount; ++i) {
             if (i) out += ' ';
@@ -84,7 +74,6 @@ string formatLine(const vector<string> &lineWords, int L, bool isLastLine = fals
     return out;
 }
 
-// -------------------- Cost calculation --------------------
 long long calculateCost(int startIdx, int endIdx, const vector<string> &words, int L, int exponent) {
     int visualLen = 0;
     for (int i = startIdx; i <= endIdx; ++i) visualLen += getVisualLength(words[i]);
@@ -92,13 +81,12 @@ long long calculateCost(int startIdx, int endIdx, const vector<string> &words, i
     int total = visualLen + numSpaces;
     int remaining = L - total;
     if (remaining < 0) return INF_COST;
-    if (endIdx == (int)words.size() - 1) return 0; // last line cost 0 (left-justified)
+    if (endIdx == (int)words.size() - 1) return 0;
     long long c = 1;
     for (int k = 0; k < exponent; ++k) c *= remaining;
     return c;
 }
 
-// -------------------- Greedy --------------------
 vector<string> greedyJustify(const string &text, int L) {
     vector<string> words = splitText(text);
     vector<string> out;
@@ -122,11 +110,9 @@ vector<string> greedyJustify(const string &text, int L) {
     return out;
 }
 
-// compute total cost from justified lines (non-last lines cost = remaining^exponent)
 long long totalBadnessFromLines(const vector<string> &lines, int L, int exponent) {
     long long total = 0;
     for (size_t i = 0; i < lines.size(); ++i) {
-        // get words in line by splitting on whitespace
         stringstream ss(lines[i]);
         vector<string> lw;
         string w;
@@ -136,8 +122,8 @@ long long totalBadnessFromLines(const vector<string> &lines, int L, int exponent
         int spaces = (int)lw.size() - 1;
         int totalLen = sumVis + spaces;
         int remaining = L - totalLen;
-        if (i == lines.size() - 1) continue; // last line cost 0
-        if (remaining < 0) return (long long)INF_COST; // invalid
+        if (i == lines.size() - 1) continue;
+        if (remaining < 0) return (long long)INF_COST;
         long long c = 1;
         for (int k = 0; k < exponent; ++k) c *= remaining;
         total += c;
@@ -145,7 +131,6 @@ long long totalBadnessFromLines(const vector<string> &lines, int L, int exponent
     return total;
 }
 
-// -------------------- DP --------------------
 vector<string> dpJustify(const string &text, int L, int exponent) {
     vector<string> words = splitText(text);
     int n = (int)words.size();
@@ -171,18 +156,15 @@ vector<string> dpJustify(const string &text, int L, int exponent) {
         }
     }
 
-    // if no solution (very long word) return error line
     if (DP[0] >= INF_COST) {
         return { "!!! ERROR: DP could not find a solution (word > LINE_LIMIT?) !!!" };
     }
 
-    // reconstruct
     vector<string> out;
     int i = 0;
     while (i < n) {
         int j = parent[i];
-        if (j <= 0) { // shouldn't happen because DP[0] valid, but safety
-            // put remaining words naive
+        if (j <= 0) {
             vector<string> lw;
             for (int k = i; k < n; ++k) lw.push_back(words[k]);
             out.push_back(formatLine(lw, L, true));
@@ -198,27 +180,21 @@ vector<string> dpJustify(const string &text, int L, int exponent) {
     return out;
 }
 
-// -------------------- Unit tests --------------------
 void runUnitTests() {
     cout << "\n--- Running unit tests ---\n";
-    // Test 1: getVisualLength basic
     assert(getVisualLength("abc") == 3);
     assert(getVisualLength("") == 0);
 
-    // Test 2: formatLine behavior (simple ASCII)
     {
         vector<string> ws = {"a","b","c"};
-        string fl = formatLine(ws, 7, false); // total words length = 3, need 4 spaces across 2 gaps -> base=2 extra=0 -> "a__b__c"
-        // Visual length must be exactly L
+        string fl = formatLine(ws, 7, false);
         assert(getVisualLength(fl) == 7);
-        // spaces count between words should be >=1
-        // (basic sanity: line contains "a" and "b" and "c")
+
         assert(fl.find("a") != string::npos);
         assert(fl.find("b") != string::npos);
         assert(fl.find("c") != string::npos);
     }
 
-    // Test 3: preserve words & line lengths for both algorithms (English + Mongolian)
     const string eng = "This is a short English test for justification.";
     const string mn = "Оновчлолын алгоритм нь тест үүрэг гүйцэтгэнэ.";
 
@@ -226,17 +202,13 @@ void runUnitTests() {
         vector<string> g = greedyJustify(txt, LINE_LIMIT);
         vector<string> d = dpJustify(txt, LINE_LIMIT, DP_COST_EXPONENT);
 
-        // lengths
         for (const string &ln : g) assert(getVisualLength(ln) <= LINE_LIMIT);
         for (const string &ln : d) assert(getVisualLength(ln) <= LINE_LIMIT);
 
-        // word-preservation: rebuild words
         string joinedG, joinedD;
         for (size_t i = 0; i < g.size(); ++i) {
             if (i) joinedG += ' ';
-            // strip trailing spaces for safety
             string tmp = g[i];
-            // collapse multiple spaces to single spaces when extracting words
             stringstream ss(tmp);
             string w;
             bool first = true;
@@ -257,12 +229,12 @@ void runUnitTests() {
                 first = false;
             }
         }
-        // original words:
+
         stringstream sso(txt);
         vector<string> orig;
         string w;
         while (sso >> w) orig.push_back(w);
-        // split joinedG/joinedD into words
+
         vector<string> outG, outD;
         stringstream ssg(joinedG), ssd(joinedD);
         while (ssg >> w) outG.push_back(w);
@@ -271,21 +243,17 @@ void runUnitTests() {
         assert(orig == outD);
     }
 
-    cout << "Unit tests passed ✅\n";
+    cout << "Unit tests passed \n";
 }
 
-// -------------------- Cost helper --------------------
 long long computeGreedyCost(const string &text, int L, int exponent) {
     vector<string> lines = greedyJustify(text, L);
     return totalBadnessFromLines(lines, L, exponent);
 }
 
-// -------------------- Main runner --------------------
 int main() {
-    // Run unit tests first
     runUnitTests();
 
-    // Example texts (English + Mongolian)
     const string EN_TEXT =
         "Algorithms are great. Dynamic programming solves the text justification problem optimally. "
         "The Greedy approach is faster but does not guarantee the best overall solution. We must analyze both time complexity and the quality of the output.";
@@ -297,7 +265,6 @@ int main() {
 
     cout << "\n================= JUSTIFICATION (L=" << LINE_LIMIT << ") =================\n";
 
-    // DP English
     auto t0 = chrono::high_resolution_clock::now();
     vector<string> dpEn = dpJustify(EN_TEXT, LINE_LIMIT, DP_COST_EXPONENT);
     auto t1 = chrono::high_resolution_clock::now();
@@ -306,7 +273,6 @@ int main() {
     cout << "\n--- DP (English) ---\n";
     for (const string &ln : dpEn) cout << "|" << ln << "| (len=" << getVisualLength(ln) << ")\n";
 
-    // Greedy English
     t0 = chrono::high_resolution_clock::now();
     vector<string> grEn = greedyJustify(EN_TEXT, LINE_LIMIT);
     t1 = chrono::high_resolution_clock::now();
@@ -315,17 +281,14 @@ int main() {
     cout << "\n--- Greedy (English) ---\n";
     for (const string &ln : grEn) cout << "|" << ln << "| (len=" << getVisualLength(ln) << ")\n";
 
-    // Costs
     long long dpCostEn = 0;
-    // We can compute DP cost as DP[0] effectively by recomputing with calculateCost,
-    // but we already have dpJustify result; compute cost from lines for fair comparison:
+
     dpCostEn = totalBadnessFromLines(dpEn, LINE_LIMIT, DP_COST_EXPONENT);
     long long grCostEn = totalBadnessFromLines(grEn, LINE_LIMIT, DP_COST_EXPONENT);
 
     cout << "\nEnglish costs: DP = " << dpCostEn << ", Greedy = " << grCostEn << "\n";
     cout << "English runtimes: DP = " << dt_dp_en.count() * 1e6 << " μs, Greedy = " << dt_gr_en.count() * 1e6 << " μs\n";
 
-    // Now Mongolian
     t0 = chrono::high_resolution_clock::now();
     vector<string> dpMn = dpJustify(MN_TEXT, LINE_LIMIT, DP_COST_EXPONENT);
     t1 = chrono::high_resolution_clock::now();
@@ -348,8 +311,6 @@ int main() {
     cout << "\nMongolian costs: DP = " << dpCostMn << ", Greedy = " << grCostMn << "\n";
     cout << "Mongolian runtimes: DP = " << dt_dp_mn.count() * 1e6 << " μs, Greedy = " << dt_gr_mn.count() * 1e6 << " μs\n";
 
-    // Simple memory estimate for DP arrays in bytes:
-    // DP: (n+1) * sizeof(long long), parent: (n+1) * sizeof(int)
     {
         vector<string> words = splitText(MN_TEXT);
         size_t n = words.size();
@@ -357,7 +318,6 @@ int main() {
         cout << "\nEstimated DP memory (Mongolian text): " << bytes << " bytes (" << (bytes / 1024.0) << " KB)\n";
     }
 
-    // Quick conclusion print
     cout << "\n--- Quick conclusion ---\n";
     cout << "DP gives (provably) minimal badness for the chosen badness function; Greedy is faster but can be suboptimal.\n";
     cout << "Observe costs and runtimes above for empirical comparison.\n";

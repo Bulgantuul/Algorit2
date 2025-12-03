@@ -1,9 +1,7 @@
-# justification_full.py
 import time
 import random
 import math
 
-# ------------------ Test Data ------------------
 LINE_LIMIT = 40
 NUM_WORDS_SMALL = 500
 NUM_WORDS_LARGE = 5000
@@ -32,14 +30,14 @@ def generate_random_text(num_words, avg_word_len=5):
 TEXT_SMALL = generate_random_text(NUM_WORDS_SMALL)
 TEXT_LARGE = generate_random_text(NUM_WORDS_LARGE)
 
-# ------------------ Justification Algorithms ------------------
+
 def format_line(line_words, L):
     """Мөрийг бүрэн жигдлэх (space-үүдийг тэнцүү хуваарилах)."""
     if not line_words: 
         return ""
     word_count = len(line_words)
     total_word_length = sum(len(w) for w in line_words)
-    if word_count == 1: 
+    if word_count == 1:
         return line_words[0].ljust(L)
     total_spaces = L - total_word_length
     num_gaps = word_count - 1
@@ -81,7 +79,7 @@ def calculate_cost(start_index, end_index, words, L):
         return 0
     else:
         remaining_space = L - total_length
-        return remaining_space ** 3  # cubic badness
+        return remaining_space ** 3
 
 def dp_justify(text, L):
     words = text.split()
@@ -111,45 +109,39 @@ def dp_justify(text, L):
         i = j + 1
     return justified_lines
 
-# ------------------ Timing Helper ------------------
 def measure_time(func, text, L):
     start_time = time.perf_counter()
     func(text, L)
     end_time = time.perf_counter()
     return end_time - start_time
 
-# ------------------ Main Runner ------------------
+
 def run_tests():
     L = LINE_LIMIT
     print(f"=====================================================")
     print(f"  АЖЛЫН ҮР ДҮНГИЙН ХАРЬЦУУЛАЛТ (L={L})")
     print(f"=====================================================")
     
-    # DP English
     print("\n--- 1. DP АРГААР ЖИГДЛЭСЭН (English) ---")
     dp_result_en = dp_justify(ENGLISH_TEXT, L)
     for line in dp_result_en:
         print(f"|{line}|")
 
-    # DP Mongolian
     print("\n--- 2. DP АРГААР ЖИГДЛЭСЭН (Монгол) ---")
     dp_result_mn = dp_justify(MONGOLIAN_TEXT, L)
     for line in dp_result_mn:
         print(f"|{line}|")
 
-    # Greedy English
     print("\n--- 3. Greedy АРГААР ЖИГДЛЭСЭН (English) ---")
     greedy_result_en = greedy_justify(ENGLISH_TEXT, L)
     for line in greedy_result_en:
         print(f"|{line}|")
 
-    # Greedy Mongolian
     print("\n--- 4. Greedy АРГААР ЖИГДЛЭСЭН (Монгол) ---")
     greedy_result_mn = greedy_justify(MONGOLIAN_TEXT, L)
     for line in greedy_result_mn:
         print(f"|{line}|")
 
-    # Time comparison
     print("\n=====================================================")
     print(f"  ХУГАЦААНЫ ХАРЬЦУУЛАЛТ (Random Text, L={L})")
     print(f"=====================================================")
@@ -172,7 +164,6 @@ def run_tests():
         print("\n--- Дүгнэлт ---")
         print(f"Greedy нь Том бичвэрийн хувьд DP-ээс {speed_difference:.2f} дахин хурдан ажиллаж байна.")
 
-# ------------------ Unit Tests ------------------
 def unit_tests():
     test_texts = [
         ENGLISH_TEXT,
@@ -180,29 +171,24 @@ def unit_tests():
     ]
     
     for text in test_texts:
-        # Test DP
+        
         dp_lines = dp_justify(text, LINE_LIMIT)
         dp_joined = " ".join(line.strip() for line in dp_lines)
         words_original = text.split()
         words_dp = dp_joined.split()
         
-        # Test 1: DP lines <= LINE_LIMIT
         for line in dp_lines:
             assert len(line) <= LINE_LIMIT, f"DP line exceeds limit: {line}"
         
-        # Test 2: All words preserved
         assert words_original == words_dp, f"DP words mismatch: {words_dp}"
         
-        # Test Greedy
         greedy_lines = greedy_justify(text, LINE_LIMIT)
         greedy_joined = " ".join(line.strip() for line in greedy_lines)
         words_greedy = greedy_joined.split()
         
-        # Test 3: Greedy lines <= LINE_LIMIT
         for line in greedy_lines:
             assert len(line) <= LINE_LIMIT, f"Greedy line exceeds limit: {line}"
-        
-        # Test 4: All words preserved
+
         assert words_original == words_greedy, f"Greedy words mismatch: {words_greedy}"
     
     print("All unit tests passed for DP and Greedy justification!")

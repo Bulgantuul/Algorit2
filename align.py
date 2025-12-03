@@ -1,7 +1,3 @@
-# justify_with_pyphen_full.py
-# Python: greedy + dp justification + hyphenation via Pyphen (Hunspell patterns)
-# Requires: pip install pyphen
-
 from typing import List
 import pyphen
 import math
@@ -9,18 +5,16 @@ import time
 import random
 
 LINE_LIMIT = 40
-DP_COST_EXPONENT = 3  # cubic badness like standard text-justifiers
+DP_COST_EXPONENT = 3
 NUM_WORDS_SMALL = 500
 NUM_WORDS_LARGE = 5000
 
-# ------------------ Hyphenators ------------------
 hyphen_en = pyphen.Pyphen(lang='en_US')
 try:
-    hyphen_mn = pyphen.Pyphen(lang='mn')  # may not exist
+    hyphen_mn = pyphen.Pyphen(lang='mn')
 except Exception:
     hyphen_mn = None
 
-# ------------------ Test Data ------------------
 ENGLISH_TEXT = (
     "Algorithms are great. Dynamic programming solves the text justification problem optimally. "
     "The Greedy approach is faster but does not guarantee the best overall solution. "
@@ -45,7 +39,6 @@ def generate_random_text(num_words, avg_word_len=5):
 TEXT_SMALL = generate_random_text(NUM_WORDS_SMALL)
 TEXT_LARGE = generate_random_text(NUM_WORDS_LARGE)
 
-# ------------------ Utility Functions ------------------
 def visual_len(s: str) -> int:
     return len(s)
 
@@ -81,7 +74,6 @@ def hyphenate_pyphen(word: str, hyphenator: pyphen.Pyphen, width_remaining: int)
             return prefix + '-', remaining, True
     return word, '', False
 
-# ------------------ Justification Algorithms ------------------
 def greedy_justify(text: str, L: int, hyphenator=None) -> List[str]:
     words = text.split()
     lines = []
@@ -118,9 +110,9 @@ def calculate_cost(start_index, end_index, words, L):
     length = sum(len(words[i]) for i in range(start_index, end_index + 1))
     num_spaces = end_index - start_index
     total_length = length + num_spaces
-    if total_length > L: 
+    if total_length > L:
         return math.inf
-    elif end_index == len(words) - 1: 
+    elif end_index == len(words) - 1:
         return 0
     else:
         return (L - total_length) ** DP_COST_EXPONENT
@@ -185,14 +177,12 @@ def dp_justify(text: str, L: int, hyphenator=None) -> List[str]:
         i = j
     return out
 
-# ------------------ Timing ------------------
 def measure_time(func, text, L, hyphenator=None):
     start = time.perf_counter()
     func(text, L, hyphenator)
     end = time.perf_counter()
     return end - start
 
-# ------------------ Test + Print ------------------
 def test_and_print():
     texts = [(ENGLISH_TEXT, hyphen_en, "English"), (MONGOLIAN_TEXT, hyphen_mn, "Mongolian")]
     for text, hyphenator, lang in texts:
@@ -203,7 +193,6 @@ def test_and_print():
         for ln in dp_justify(text, LINE_LIMIT, hyphenator):
             print(f"|{ln}| ({visual_len(ln)})")
 
-# ------------------ Unit Tests ------------------
 def unit_tests():
     texts = [(ENGLISH_TEXT, hyphen_en), (MONGOLIAN_TEXT, hyphen_mn)]
     for text, h in texts:
@@ -216,11 +205,10 @@ def unit_tests():
             assert words_original == words_out, f"Words mismatch for {justify_func.__name__}"
     print("All unit tests passed!")
 
-# ------------------ Main ------------------
 if __name__ == "__main__":
     test_and_print()
     unit_tests()
-    # Optional: timing on random large text
+
     print("\n=== Timing Random Text ===")
     for text, label in [(TEXT_SMALL, "Small"), (TEXT_LARGE, "Large")]:
         t_dp = measure_time(dp_justify, text, LINE_LIMIT)
