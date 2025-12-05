@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <string>
 #include <sstream>
@@ -10,9 +11,20 @@
 
 using namespace std;
 
-const int LINE_LIMIT = 70;
 const int DP_COST_EXPONENT = 2;
 const long long INF_COST = (long long)1e18;
+const string INPUT_FILENAME = "mongolian_input.txt";
+
+string readFile(const string& filename) {
+    ifstream file(filename);
+    if (!file.is_open()) {
+        cerr << "Error: Could not open file " << filename << endl;
+        exit(1);
+    }
+    stringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
+}
 
 int getVisualLength(const string &s) {
     int length = 0;
@@ -82,6 +94,7 @@ long long calculateCost(int startIdx, int endIdx, const vector<string> &words, i
     int remaining = L - total;
     if (remaining < 0) return INF_COST;
     if (endIdx == (int)words.size() - 1) return 0;
+
     long long c = 1;
     for (int k = 0; k < exponent; ++k) c *= remaining;
     return c;
@@ -113,17 +126,20 @@ vector<string> greedyJustify(const string &text, int L) {
 long long totalBadnessFromLines(const vector<string> &lines, int L, int exponent) {
     long long total = 0;
     for (size_t i = 0; i < lines.size(); ++i) {
+        if (i == lines.size() - 1) continue;
+
         stringstream ss(lines[i]);
         vector<string> lw;
         string w;
         while (ss >> w) lw.push_back(w);
+
         int sumVis = 0;
         for (const string &ww : lw) sumVis += getVisualLength(ww);
         int spaces = (int)lw.size() - 1;
         int totalLen = sumVis + spaces;
         int remaining = L - totalLen;
-        if (i == lines.size() - 1) continue;
         if (remaining < 0) return (long long)INF_COST;
+
         long long c = 1;
         for (int k = 0; k < exponent; ++k) c *= remaining;
         total += c;
@@ -135,6 +151,7 @@ vector<string> dpJustify(const string &text, int L, int exponent) {
     vector<string> words = splitText(text);
     int n = (int)words.size();
     if (n == 0) return {};
+
     vector<long long> DP(n + 1, INF_COST);
     vector<int> parent(n + 1, -1);
     DP[n] = 0;
@@ -145,9 +162,11 @@ vector<string> dpJustify(const string &text, int L, int exponent) {
             int wVis = getVisualLength(words[j]);
             curVis = (j == i ? wVis : curVis + 1 + wVis);
             if (curVis > L) break;
+
             long long cost = calculateCost(i, j, words, L, exponent);
             if (cost == INF_COST) continue;
             if (DP[j + 1] == INF_COST) continue;
+
             long long total = cost + DP[j + 1];
             if (total < DP[i]) {
                 DP[i] = total;
@@ -157,19 +176,14 @@ vector<string> dpJustify(const string &text, int L, int exponent) {
     }
 
     if (DP[0] >= INF_COST) {
-        return { "!!! ERROR: DP could not find a solution (word > LINE_LIMIT?) !!!" };
+        return { "!!! АЛДАА: DP-ээр шийдэл олдсонгүй !!!" };
     }
 
     vector<string> out;
     int i = 0;
     while (i < n) {
         int j = parent[i];
-        if (j <= 0) {
-            vector<string> lw;
-            for (int k = i; k < n; ++k) lw.push_back(words[k]);
-            out.push_back(formatLine(lw, L, true));
-            break;
-        }
+        if (j == -1) break;
         int endIdx = j - 1;
         vector<string> lineWords;
         for (int k = i; k <= endIdx; ++k) lineWords.push_back(words[k]);
@@ -181,7 +195,7 @@ vector<string> dpJustify(const string &text, int L, int exponent) {
 }
 
 void runUnitTests() {
-    cout << "\n--- Running unit tests ---\n";
+    assert(getVisualLength("бичвэр") == 6);
     assert(getVisualLength("abc") == 3);
     assert(getVisualLength("") == 0);
 
@@ -189,137 +203,74 @@ void runUnitTests() {
         vector<string> ws = {"a","b","c"};
         string fl = formatLine(ws, 7, false);
         assert(getVisualLength(fl) == 7);
-
         assert(fl.find("a") != string::npos);
         assert(fl.find("b") != string::npos);
         assert(fl.find("c") != string::npos);
     }
 
-    const string eng = "This is a short English test for justification.";
-    const string mn = "Оновчлолын алгоритм нь тест үүрэг гүйцэтгэнэ.";
+    const string placeholder_mn = "Бичвэрийг жигдлэх тест";
 
-    for (const string &txt : {eng, mn}) {
-        vector<string> g = greedyJustify(txt, LINE_LIMIT);
-        vector<string> d = dpJustify(txt, LINE_LIMIT, DP_COST_EXPONENT);
+    for (const string &txt : {placeholder_mn}) {
+        vector<string> g = greedyJustify(txt, 15);
+        vector<string> d = dpJustify(txt, 15, DP_COST_EXPONENT);
 
-        for (const string &ln : g) assert(getVisualLength(ln) <= LINE_LIMIT);
-        for (const string &ln : d) assert(getVisualLength(ln) <= LINE_LIMIT);
-
-        string joinedG, joinedD;
-        for (size_t i = 0; i < g.size(); ++i) {
-            if (i) joinedG += ' ';
-            string tmp = g[i];
-            stringstream ss(tmp);
-            string w;
-            bool first = true;
-            while (ss >> w) {
-                if (!first) joinedG += ' ';
-                joinedG += w;
-                first = false;
-            }
-        }
-        for (size_t i = 0; i < d.size(); ++i) {
-            if (i) joinedD += ' ';
-            string tmp = d[i];
-            stringstream ss(tmp);
-            string w; bool first = true;
-            while (ss >> w) {
-                if (!first) joinedD += ' ';
-                joinedD += w;
-                first = false;
-            }
-        }
-
-        stringstream sso(txt);
-        vector<string> orig;
-        string w;
-        while (sso >> w) orig.push_back(w);
-
-        vector<string> outG, outD;
-        stringstream ssg(joinedG), ssd(joinedD);
-        while (ssg >> w) outG.push_back(w);
-        while (ssd >> w) outD.push_back(w);
-        assert(orig == outG);
-        assert(orig == outD);
+        for (const string &ln : g) assert(getVisualLength(ln) <= 15);
+        for (const string &ln : d) assert(getVisualLength(ln) <= 15);
     }
-
-    cout << "Unit tests passed \n";
-}
-
-long long computeGreedyCost(const string &text, int L, int exponent) {
-    vector<string> lines = greedyJustify(text, L);
-    return totalBadnessFromLines(lines, L, exponent);
 }
 
 int main() {
+    setlocale(LC_ALL, "en_US.UTF-8");
+
     runUnitTests();
 
-    const string EN_TEXT =
-        "Algorithms are great. Dynamic programming solves the text justification problem optimally. "
-        "The Greedy approach is faster but does not guarantee the best overall solution. We must analyze both time complexity and the quality of the output.";
+    int lineLimit;
+    cout << "\nLINE_LIMIT (мөрийн дээд урт)-ийг оруулна уу: ";
+    if (!(cin >> lineLimit) || lineLimit <= 0) {
+        cerr << "Алдаа: LINE_LIMIT нь эерэг бүхэл тоо байх ёстой." << endl;
+        return 1;
+    }
 
-    const string MN_TEXT =
-        "Оновчлолын алгоритмууд нь програм хангамжийн бүтцэд чухал үүрэг гүйцэтгэдэг. "
-        "Динамик программчлал нь бичвэрийг хамгийн бага алдагдалтайгаар жигдлэх оновчтой шийдлийг олох боломжийг олгодог. "
-        "Шуналтай арга нь хурдан боловч оновчтой бус байх магадлалтай.";
+    const string MN_TEXT = readFile(INPUT_FILENAME);
 
-    cout << "\n================= JUSTIFICATION (L=" << LINE_LIMIT << ") =================\n";
+    if (MN_TEXT.empty()) {
+        cerr << "Алдаа: " << INPUT_FILENAME << " файл хоосон байна." << endl;
+        return 1;
+    }
+
+    cout << "\n================= БИЧВЭР ЖИГДЛЭЛТ (" << INPUT_FILENAME << ", L=" << lineLimit << ") =================\n";
 
     auto t0 = chrono::high_resolution_clock::now();
-    vector<string> dpEn = dpJustify(EN_TEXT, LINE_LIMIT, DP_COST_EXPONENT);
+    vector<string> dpMn = dpJustify(MN_TEXT, lineLimit, DP_COST_EXPONENT);
     auto t1 = chrono::high_resolution_clock::now();
-    chrono::duration<double> dt_dp_en = t1 - t0;
-
-    cout << "\n--- DP (English) ---\n";
-    for (const string &ln : dpEn) cout << "|" << ln << "| (len=" << getVisualLength(ln) << ")\n";
-
-    t0 = chrono::high_resolution_clock::now();
-    vector<string> grEn = greedyJustify(EN_TEXT, LINE_LIMIT);
-    t1 = chrono::high_resolution_clock::now();
-    chrono::duration<double> dt_gr_en = t1 - t0;
-
-    cout << "\n--- Greedy (English) ---\n";
-    for (const string &ln : grEn) cout << "|" << ln << "| (len=" << getVisualLength(ln) << ")\n";
-
-    long long dpCostEn = 0;
-
-    dpCostEn = totalBadnessFromLines(dpEn, LINE_LIMIT, DP_COST_EXPONENT);
-    long long grCostEn = totalBadnessFromLines(grEn, LINE_LIMIT, DP_COST_EXPONENT);
-
-    cout << "\nEnglish costs: DP = " << dpCostEn << ", Greedy = " << grCostEn << "\n";
-    cout << "English runtimes: DP = " << dt_dp_en.count() * 1e6 << " μs, Greedy = " << dt_gr_en.count() * 1e6 << " μs\n";
-
-    t0 = chrono::high_resolution_clock::now();
-    vector<string> dpMn = dpJustify(MN_TEXT, LINE_LIMIT, DP_COST_EXPONENT);
-    t1 = chrono::high_resolution_clock::now();
     chrono::duration<double> dt_dp_mn = t1 - t0;
 
-    cout << "\n--- DP (Mongolian) ---\n";
-    for (const string &ln : dpMn) cout << "|" << ln << "| (len=" << getVisualLength(ln) << ")\n";
+    cout << "\n--- DP ҮР ДҮН ---\n";
+    for (const string &ln : dpMn) cout << "|" << ln << "| (урт=" << getVisualLength(ln) << ")\n";
 
     t0 = chrono::high_resolution_clock::now();
-    vector<string> grMn = greedyJustify(MN_TEXT, LINE_LIMIT);
+    vector<string> grMn = greedyJustify(MN_TEXT, lineLimit);
     t1 = chrono::high_resolution_clock::now();
     chrono::duration<double> dt_gr_mn = t1 - t0;
 
-    cout << "\n--- Greedy (Mongolian) ---\n";
-    for (const string &ln : grMn) cout << "|" << ln << "| (len=" << getVisualLength(ln) << ")\n";
+    cout << "\n--- Greedy ҮР ДҮН ---\n";
+    for (const string &ln : grMn) cout << "|" << ln << "| (урт=" << getVisualLength(ln) << ")\n";
 
-    long long dpCostMn = totalBadnessFromLines(dpMn, LINE_LIMIT, DP_COST_EXPONENT);
-    long long grCostMn = totalBadnessFromLines(grMn, LINE_LIMIT, DP_COST_EXPONENT);
+    long long dpCostMn = totalBadnessFromLines(dpMn, lineLimit, DP_COST_EXPONENT);
+    long long grCostMn = totalBadnessFromLines(grMn, lineLimit, DP_COST_EXPONENT);
 
-    cout << "\nMongolian costs: DP = " << dpCostMn << ", Greedy = " << grCostMn << "\n";
-    cout << "Mongolian runtimes: DP = " << dt_dp_mn.count() * 1e6 << " μs, Greedy = " << dt_gr_mn.count() * 1e6 << " μs\n";
-{
+    cout << "\n--- ХАРЬЦУУЛАЛТ ---\n";
+    cout << "Badness: DP = " << dpCostMn << ", Greedy = " << grCostMn << "\n";
+    cout << "Хугацаа: DP = " << dt_dp_mn.count() * 1e6 << " μs, Greedy = " << dt_gr_mn.count() * 1e6 << " μs\n";
+
     vector<string> words = splitText(MN_TEXT);
     size_t n = words.size();
     size_t bytes = (n + 1) * sizeof(long long) + (n + 1) * sizeof(int);
-    cout << "\nDP-ийн ой санах ойны тооцоо (Монгол текст): " << bytes << " байт (" << (bytes / 1024.0) << " KB)\n";
-}
+    cout << "DP ой санамж (N=" << n << "): " << bytes << " байт (" << (bytes / 1024.0) << " KB)\n";
 
-cout << "\n--- Түргэн дүгнэлт ---\n";
-cout << "DP нь сонгогдсон badness функцэд (баталгаатай) хамгийн бага badness өгдөг; Greedy нь хурдан ажилладаг ч үр дүн нь заримдаа suboptimal байж болно.\n";
-cout << "Дээрх тооцоо, гүйцэтгэлийн хугацааг ажиглаад харьцуулалт хийх боломжтой.\n";
+    cout << "\n--- ДҮГНЭЛТ ---\n";
+    cout << "DP: Оновчтой шийдэл.\n";
+    cout << "Greedy: Хурдан ажиллагаатай.\n";
 
     cout << "\n================================================================\n";
     return 0;

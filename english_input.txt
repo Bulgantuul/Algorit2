@@ -1,0 +1,1 @@
+Algorithms are great. Dynamic programming solves the text justification problem optimally. The Greedy approach is faster but does not guarantee the best overall solution. We must analyze both time complexity and the quality of the output.
