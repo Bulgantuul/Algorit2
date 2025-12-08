@@ -213,7 +213,7 @@ def test_and_print(L):
     texts = [(ENGLISH_TEXT, hyphen_en, "English"), (MONGOLIAN_TEXT, hyphen_mn, "Mongolian")]
     for text, hyphenator, lang in texts:
         if not text:
-            print(f"{lang} text empty.")
+            print(f"{lang} текст хоосон.")
             continue
         print(f"GREEDY {lang}")
         for ln in greedy_justify(text, L, hyphenator):
@@ -232,7 +232,7 @@ def unit_tests(L):
             lines = justify_func(text, L, h)
             for line in lines:
                 if visual_len(line) > L:
-                    print("Line too long.")
+                    print("Хэт урт шугам.")
                     tests_passed = False
             words_original = text.split()
             words_out_flat = "".join(line.strip().replace(" ", "") for line in lines)
@@ -241,14 +241,14 @@ def unit_tests(L):
             if words_original_flat != words_out_flat_no_hyphen:
                 tests_passed = False
     if tests_passed:
-        print(f"All tests passed for L={L}!")
+        print(f"Бүх шалгалтыг давсан L={L}!")
     else:
-        print(f"Tests FAILED for L={L}.")
+        print(f"Туршилтууд АМЖИЛТГҮЙ L={L}.")
 
 def get_line_limit() -> int:
     while True:
         try:
-            sys.stdout.write("Enter L: ")
+            sys.stdout.write("Oруулна уу: ")
             sys.stdout.flush()
             limit = sys.stdin.readline().strip()
             if not limit:
@@ -265,7 +265,7 @@ if __name__ == "__main__":
     test_and_print(FINAL_LINE_LIMIT)
     unit_tests(FINAL_LINE_LIMIT)
 
-    print("Timing Random Text")
+    print("Цагийн санамсаргүй текст")
     if ENGLISH_TEXT:
         t_dp_en = measure_time(dp_justify, ENGLISH_TEXT, FINAL_LINE_LIMIT, hyphen_en)
         t_greedy_en = measure_time(greedy_justify, ENGLISH_TEXT, FINAL_LINE_LIMIT, hyphen_en)

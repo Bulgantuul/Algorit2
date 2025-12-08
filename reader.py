@@ -110,33 +110,29 @@ def read_text_file(filename):
 def run_tests(text_file="input.txt"):
     while True:
         try:
-            L = int(input("Enter LINE_LIMIT for text justification: "))
+            L = int(input("Текстийн үндэслэлийг LINE_LIMIT оруулна уу: "))
             if L <= 0:
-                print("LINE_LIMIT must be positive. Try again.")
+                print("Error")
                 continue
             break
         except ValueError:
-            print("Invalid input. Enter an integer value.")
+            print("Buruu baina")
 
     text = read_text_file(text_file)
 
-    print(f"\n=====================================================")
     print(f"  АЖЛЫН ҮР ДҮНГИЙН ХАРЬЦУУЛАЛТ (L={L})")
-    print(f"=====================================================")
     
-    print("\n--- DP АРГААР ЖИГДЛЭСЭН ---")
+    print("\nDP АРГААР ЖИГДЛЭСЭН")
     dp_result = dp_justify(text, L)
     for line in dp_result:
         print(f"|{line}|")
 
-    print("\n--- Greedy АРГААР ЖИГДЛЭСЭН ---")
+    print("\nGreedy АРГААР ЖИГДЛЭСЭН ")
     greedy_result = greedy_justify(text, L)
     for line in greedy_result:
         print(f"|{line}|")
 
-    print("\n=====================================================")
     print(f"  ХУГАЦААНЫ ХАРЬЦУУЛАЛТ (Random Text, L={L})")
-    print(f"=====================================================")
     
     time_dp_small = measure_time(dp_justify, TEXT_SMALL, L)
     time_greedy_small = measure_time(greedy_justify, TEXT_SMALL, L)
@@ -165,20 +161,20 @@ def unit_tests():
     words_dp = dp_joined.split()
     
     for line in dp_lines:
-        assert len(line) <= LINE_LIMIT, f"DP line exceeds limit: {line}"
+        assert len(line) <= LINE_LIMIT, f"DP шугам хязгаараас хэтэрсэн: {line}"
     
-    assert words_original == words_dp, f"DP words mismatch: {words_dp}"
+    assert words_original == words_dp, f"DP үг таарахгүй байна: {words_dp}"
     
     greedy_lines = greedy_justify(text, LINE_LIMIT)
     greedy_joined = " ".join(line.strip() for line in greedy_lines)
     words_greedy = greedy_joined.split()
     
     for line in greedy_lines:
-        assert len(line) <= LINE_LIMIT, f"Greedy line exceeds limit: {line}"
+        assert len(line) <= LINE_LIMIT, f"Greedy шугам хязгаараас хэтэрсэн: {line}"
 
-    assert words_original == words_greedy, f"Greedy words mismatch: {words_greedy}"
+    assert words_original == words_greedy, f"Greedy үг таарахгүй байна: {words_greedy}"
     
-    print("All unit tests passed for DP and Greedy justification!")
+    print("Бүх нэгжийн шалгалтууд DB болон Greedy тэнцсэн!")
 
 if __name__ == "__main__":
     run_tests("mongolian_input.txt")

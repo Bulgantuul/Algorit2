@@ -18,7 +18,7 @@ const string INPUT_FILENAME = "mongolian_input.txt";
 string readFile(const string& filename) {
     ifstream file(filename);
     if (!file.is_open()) {
-        cerr << "Error: Could not open file " << filename << endl;
+        cerr << "Error" << filename << endl;
         exit(1);
     }
     stringstream buffer;
@@ -176,7 +176,7 @@ vector<string> dpJustify(const string &text, int L, int exponent) {
     }
 
     if (DP[0] >= INF_COST) {
-        return { "!!! АЛДАА: DP-ээр шийдэл олдсонгүй !!!" };
+        return { "АЛДАА" };
     }
 
     vector<string> out;
@@ -238,14 +238,14 @@ int main() {
         return 1;
     }
 
-    cout << "\n================= БИЧВЭР ЖИГДЛЭЛТ (" << INPUT_FILENAME << ", L=" << lineLimit << ") =================\n";
+    cout << "\nБИЧВЭР ЖИГДЛЭЛТ (" << INPUT_FILENAME << ", L=" << lineLimit << ")\n";
 
     auto t0 = chrono::high_resolution_clock::now();
     vector<string> dpMn = dpJustify(MN_TEXT, lineLimit, DP_COST_EXPONENT);
     auto t1 = chrono::high_resolution_clock::now();
     chrono::duration<double> dt_dp_mn = t1 - t0;
 
-    cout << "\n--- DP ҮР ДҮН ---\n";
+    cout << "\nDP ҮР ДҮН\n";
     for (const string &ln : dpMn) cout << "|" << ln << "| (урт=" << getVisualLength(ln) << ")\n";
 
     t0 = chrono::high_resolution_clock::now();
@@ -253,13 +253,13 @@ int main() {
     t1 = chrono::high_resolution_clock::now();
     chrono::duration<double> dt_gr_mn = t1 - t0;
 
-    cout << "\n--- Greedy ҮР ДҮН ---\n";
+    cout << "\nGreedy ҮР ДҮН\n";
     for (const string &ln : grMn) cout << "|" << ln << "| (урт=" << getVisualLength(ln) << ")\n";
 
     long long dpCostMn = totalBadnessFromLines(dpMn, lineLimit, DP_COST_EXPONENT);
     long long grCostMn = totalBadnessFromLines(grMn, lineLimit, DP_COST_EXPONENT);
 
-    cout << "\n--- ХАРЬЦУУЛАЛТ ---\n";
+    cout << "\nХАРЬЦУУЛАЛТ\n";
     cout << "Badness: DP = " << dpCostMn << ", Greedy = " << grCostMn << "\n";
     cout << "Хугацаа: DP = " << dt_dp_mn.count() * 1e6 << " μs, Greedy = " << dt_gr_mn.count() * 1e6 << " μs\n";
 
@@ -268,10 +268,8 @@ int main() {
     size_t bytes = (n + 1) * sizeof(long long) + (n + 1) * sizeof(int);
     cout << "DP ой санамж (N=" << n << "): " << bytes << " байт (" << (bytes / 1024.0) << " KB)\n";
 
-    cout << "\n--- ДҮГНЭЛТ ---\n";
+    cout << "\nДҮГНЭЛТ\n";
     cout << "DP: Оновчтой шийдэл.\n";
     cout << "Greedy: Хурдан ажиллагаатай.\n";
-
-    cout << "\n================================================================\n";
     return 0;
 }
